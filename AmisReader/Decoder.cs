@@ -9,34 +9,27 @@ namespace AmisReader
         public static List<int> Run(string keyString, byte[] data)
         {
             //Convert hex-string into bytes
-            byte[] keyBytes = new byte[keyString.Length / 2];
-            for (int i = 0; i < keyBytes.Length; i++)
+            byte[] keyBytes = new byte[16];
+            for (int i = 0; i < 16; i++)
                 keyBytes[i] = Convert.ToByte(keyString.Substring(i * 2, 2), 16);
 
-            var header = data.SubArray(0, 4);
             var cryptBytes = data.SubArray(19, 80);
 
-            //Verschlüsselter Teil
-            // string cryptString = decrypt.Replace(" ", "").Substring(19 * 2, 80 * 2);
-
+            //Noch nicht 100% sauber
             //Wiird aus Daten vor verschlüsseltem Teil zusammengesezt
             string ivString =
                 "2D4C00000000010E";
 
+            byte[] ivBytes = new byte[16];
+
             for (int i = 0; i < 8; i++)
-                ivString += data[15].ToString("X2");
-
-            //Wird von NetzOoe vergeben
-
-            byte[] ivBytes = new byte[ivString.Length / 2];
-            //  byte[] cryptBytes = new byte[cryptString.Length / 2];
-
-            for (int i = 0; i < ivBytes.Length; i++)
                 ivBytes[i] = Convert.ToByte(ivString.Substring(i * 2, 2), 16);
+
+            for (int i = 8; i < 16; i++)
+                ivBytes[i] = data[15];
 
             var aes = Aes.Create();
             aes.Padding = PaddingMode.Zeros;
-
             var result = aes.CreateDecryptor(keyBytes, ivBytes).TransformFinalBlock(cryptBytes, 0, cryptBytes.Length);
 
             //erstes Byte ist das Dif, wenn 8x (höchstes Bit), folgt ein DIFE byte
