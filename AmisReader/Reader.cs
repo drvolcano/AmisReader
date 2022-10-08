@@ -90,6 +90,8 @@ namespace AmisReader
 
                         if (reading && data == ByteEnd && buffer.Count == TelegramLength)
                         {
+                            //TOOD: Checksum
+
                             reading = false;
                             DataReceived?.Invoke(this, buffer.ToArray().SubArray(LenghtHeader, LengthData));
                         }
