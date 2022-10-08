@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Security.Cryptography;
 using System.Collections.Generic;
+using System.IO;
 
 namespace AmisReader
 {
@@ -8,25 +9,77 @@ namespace AmisReader
     {
         public static List<int> Run(string keyString, byte[] data)
         {
+            int i = 0;
+
+            //-----------------------------------
+            var h1 = data[i++];//0x68
+            var l1 = data[i++];//Nutzdatenlänge
+            var l2 = data[i++];//Nutzdatenlänge Wiederholung
+            var h2 = data[i++];//0x68
+            //-----------------------------------
+            var c = data[i++];
+            var a = data[i++];
+            var ci = data[i++];
+
+            var identification = new byte[]
+            {
+                data [i++],
+                data[i++],
+                data[i++],
+                data[i++]
+            };
+
+            var manufacturer = new byte[]
+            {
+                    data[i++],
+                    data[i++],
+            };
+
+            var version = data[i++];
+            var devType = data[i++];
+            var access = data[i++];
+            var status = data[i++];
+
+            var configuration = new byte[]
+            {
+                    data[i++],
+                    data[i++],
+            };
+
+            //-----------------------------------
+            //4 bytes header
+            //15 bytes pre data
+            //(len- 15) bytes data
+            //2 bytes footer
+
+            var cryptBytes = data.SubArray(19, l1 - 15);
+
+            //-----------------------------------
+
+            var ivBytes = new byte[]
+            {
+                manufacturer[0],
+                manufacturer[1],
+                identification[0],
+                identification[1],
+                identification[2],
+                identification[3],
+                version,
+                devType,
+                access,
+                access,
+                access,
+                access,
+                access,
+                access,
+                access,
+                access,
+            };
+
             //Convert hex-string into bytes
             byte[] keyBytes = new byte[16];
-            for (int i = 0; i < 16; i++)
-                keyBytes[i] = Convert.ToByte(keyString.Substring(i * 2, 2), 16);
-
-            var cryptBytes = data.SubArray(19, 80);
-
-            //Noch nicht 100% sauber
-            //Wiird aus Daten vor verschlüsseltem Teil zusammengesezt
-            string ivString =
-                "2D4C00000000010E";
-
-            byte[] ivBytes = new byte[16];
-
-            for (int i = 0; i < 8; i++)
-                ivBytes[i] = Convert.ToByte(ivString.Substring(i * 2, 2), 16);
-
-            for (int i = 8; i < 16; i++)
-                ivBytes[i] = data[15];
+            for (int j = 0; j < 16; j++)
+                keyBytes[j] = Convert.ToByte(keyString.Substring(j * 2, 2), 16);
 
             var aes = Aes.Create();
             aes.Padding = PaddingMode.Zeros;
@@ -47,7 +100,7 @@ namespace AmisReader
             var b0483FF04 = BitConverter.ToInt32(result.SubArray(74, 4), 0);//1.128.0 Inkassozählwerk Wh
 
             return new List<int>() {
-                b0403 ,
+            b0403 ,
             b04833C ,
             b8410FB8273 ,
             b8410FB82F33C ,
