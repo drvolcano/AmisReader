@@ -7,77 +7,54 @@ namespace AmisReader
 {
     public static class Decoder
     {
+        /// <summary>
+        /// Decodes the content of the telegram
+        /// </summary>
+        /// <param name="keyString">The key as hex-string (2 digits per byte, no spaces)</param>
+        /// <param name="data">the content of the telegram, without header and footer</param>
+        /// <returns></returns>
         public static byte[] Run(string keyString, byte[] data)
         {
-            int i = 0;
-            var c = data[i++];
-            var a = data[i++];
-            var ci = data[i++];
-
-            var identification = new byte[]
-            {
-                data [i++],
-                data[i++],
-                data[i++],
-                data[i++]
-            };
-
-            var manufacturer = new byte[]
-            {
-                    data[i++],
-                    data[i++],
-            };
-
-            var version = data[i++];
-            var devType = data[i++];
-            var access = data[i++];
-            var status = data[i++];
-
-            var configuration = new byte[]
-            {
-                    data[i++],
-                    data[i++],
-            };
-
-            //-----------------------------------
-            //4 bytes header
-            //15 bytes pre data
-            //(len- 15) bytes data
-            //2 bytes footer
-
-            var cryptBytes = data.SubArray(i, data.Length - i);
-
-            //-----------------------------------
-
-            var ivBytes = new byte[]
-            {
-                manufacturer[0],
-                manufacturer[1],
-                identification[0],
-                identification[1],
-                identification[2],
-                identification[3],
-                version,
-                devType,
-                access,
-                access,
-                access,
-                access,
-                access,
-                access,
-                access,
-                access,
-            };
-
-            //Convert hex-string into bytes
-            byte[] keyBytes = new byte[16];
+            //Generate key (hex-string to bytes)
+            byte[] key = new byte[16];
             for (int j = 0; j < 16; j++)
-                keyBytes[j] = Convert.ToByte(keyString.Substring(j * 2, 2), 16);
+                key[j] = Convert.ToByte(keyString.Substring(j * 2, 2), 16);
 
-            var aes = Aes.Create();
-            aes.Padding = PaddingMode.Zeros;
-            var result = aes.CreateDecryptor(keyBytes, ivBytes).TransformFinalBlock(cryptBytes, 0, cryptBytes.Length);
-            return result;
+            using (var stream = new MemoryStream(data))
+            using (var reader = new BinaryReader(stream))
+            {
+                //Separate data
+                var c = reader.ReadByte();
+                var a = reader.ReadByte();
+                var ci = reader.ReadByte();
+                var identification = reader.ReadBytes(4);
+                var manufacturer = reader.ReadBytes(2);
+                var version = reader.ReadByte();
+                var devType = reader.ReadByte();
+                var access = reader.ReadByte();
+                var status = reader.ReadByte();
+                var configuration = reader.ReadBytes(2);
+                var encryptedData = reader.ReadBytes((int)(reader.BaseStream.Length - reader.BaseStream.Position));
+
+                using (var iv = new MemoryStream())
+                using (BinaryWriter writer = new BinaryWriter(iv))
+                {
+                    writer.Write(manufacturer);
+                    writer.Write(identification);
+                    writer.Write(version);
+                    writer.Write(devType);
+
+                    for (int i = 0; i < 8; i++)
+                        writer.Write(access);
+
+                    //Decrypt
+                    var aes = Aes.Create();
+                    aes.Padding = PaddingMode.Zeros;
+                    var decryptedData = aes.CreateDecryptor(key, iv.ToArray()).TransformFinalBlock(encryptedData, 0, encryptedData.Length);
+
+                    return decryptedData;
+                }
+            }
         }
     }
 }
