@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace AmisReader
 {
-    public static class Decrypt
+    public static class Decoder
     {
         public static List<int> Run(string keyString, byte[] data)
         {

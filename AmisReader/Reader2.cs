@@ -4,6 +4,9 @@ using System.Threading.Tasks;
 
 namespace AmisReader
 {
+    /// <summary>
+    /// Alternative Version, kann aber bei NetzOoe keine Daten lesen (ERR0007)
+    /// </summary>
     internal class Reader2
     {
         public void Do()
