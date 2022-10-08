@@ -17,7 +17,9 @@ namespace AmisReaderConsole
 
         private static void Reader_DataReceived(object sender, byte[] e)
         {
-            var results = AmisReader.Decoder.Run(key, e);
+            var decoded = AmisReader.Decoder.Run(key, e);
+            var results = AmisReader.Analyzer.Run(decoded);
+
             Console.CursorTop = 0;
             Console.CursorLeft = 0;
 

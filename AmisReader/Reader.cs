@@ -91,7 +91,7 @@ namespace AmisReader
                         if (reading && data == ByteEnd && buffer.Count == TelegramLength)
                         {
                             reading = false;
-                            DataReceived?.Invoke(this, buffer.ToArray());
+                            DataReceived?.Invoke(this, buffer.ToArray().SubArray(LenghtHeader, LengthData));
                         }
 
                         if (!reading && data == ByteEnd)
