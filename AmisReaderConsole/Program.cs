@@ -14,10 +14,11 @@ namespace AmisReaderConsole
         {
             var reader = new Reader("COM4");
             reader.DataReceived += Reader_DataReceived;
+            reader.ChecksumError += Reader_ChecksumError;
 
             if (test)
             {
-                var text = sampleData2.Replace(" ", "");
+                var text = sampleData1.Replace(" ", "");
                 byte[] testData = new byte[text.Length / 2];
 
                 for (int j = 0; j < testData.Length; j++)
@@ -32,6 +33,12 @@ namespace AmisReaderConsole
             Console.ReadLine();
         }
 
+        private static void Reader_ChecksumError(object sender, byte[] e)
+        {
+            Console.Clear();
+            Console.WriteLine("ChecksumError");
+        }
+
         private static void Reader_DataReceived(object sender, byte[] e)
         {
             var decoded = Decoder.Run(key, e);
@@ -41,7 +48,6 @@ namespace AmisReaderConsole
             Console.CursorLeft = 0;
 
             foreach (var a in results)
-
                 Console.WriteLine(a.ToString().PadRight(100));
         }
     }

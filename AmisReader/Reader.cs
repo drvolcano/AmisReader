@@ -28,6 +28,8 @@ namespace MBus
             PortName = portName;
         }
 
+        public event EventHandler<byte[]> ChecksumError;
+
         public event EventHandler<byte[]> DataReceived;
 
         public byte ByteAck => 0xe5;
@@ -121,10 +123,18 @@ namespace MBus
 
                         if (reading && data == ByteEnd && buffer.Count == TelegramLength)
                         {
-                            //TOOD: Checksum
+                            var content = buffer.ToArray().SubArray(LenghtHeader, LengthData);
 
                             reading = false;
-                            DataReceived?.Invoke(this, buffer.ToArray().SubArray(LenghtHeader, LengthData));
+
+                            var checksum = 0;
+                            foreach (var b in content)
+                                checksum += b;
+
+                            if ((checksum & 0xFF) == buffer[buffer.Count - 2])
+                                DataReceived?.Invoke(this, content);
+                            else
+                                ChecksumError?.Invoke(this, buffer.ToArray());
                         }
 
                         if (!reading && data == ByteEnd)
