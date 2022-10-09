@@ -18,13 +18,13 @@ namespace AmisReaderConsole
             if (test)
             {
                 var sampleData = sampleData1;
-                var parts = sampleData.Substring(4 * 3, sampleData.Length - 6 * 3).Split(' ');
+                var parts = sampleData.Split(' ');
                 var data = new List<byte>();
 
                 foreach (var part in parts)
                     data.Add(Byte.Parse(part, System.Globalization.NumberStyles.HexNumber));
 
-                Reader_DataReceived(null, data.ToArray());
+                reader.Start(new System.IO.MemoryStream(data.ToArray()));
             }
             else
             {

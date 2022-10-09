@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO.Ports;
 using System.Threading.Tasks;
+using System.IO;
 
 namespace AmisReader
 {
@@ -40,6 +41,11 @@ namespace AmisReader
 
         public void Start()
         {
+            Start(null);
+        }
+
+        public void Start(MemoryStream sampleStream)
+        {
             while (stop) ;
 
             Task.Run(() =>
@@ -54,16 +60,31 @@ namespace AmisReader
                     NewLine = "\r\n"
                 };
 
-                serialPort.Open();
+                if (sampleStream == null)
+                    serialPort.Open();
 
                 bool reading = false;
                 List<byte> buffer = new List<byte>();
+                byte data = 0;
+                bool hasData = false;
 
                 while (!stop)
-                    if (serialPort.BytesToRead > 0)
+                {
+                    if (sampleStream == null && serialPort.BytesToRead > 0)
                     {
-                        var data = (byte)serialPort.ReadByte();
+                        data = (byte)serialPort.ReadByte();
+                        hasData = true;
+                    }
+                    else if (sampleStream != null && sampleStream.Position < sampleStream.Length)
+                    {
+                        data = (byte)sampleStream.ReadByte();
+                        hasData = true;
+                    }
+                    else
+                        hasData = false;
 
+                    if (hasData)
+                    {
                         if (!reading && data == ByteHeader)
                         {
                             buffer.Clear();
@@ -99,7 +120,7 @@ namespace AmisReader
                         if (!reading && data == ByteEnd)
                             serialPort.Write(new byte[] { ByteAck }, 0, 1);
                     }
-
+                }
                 serialPort.Close();
                 stop = false;
             });
