@@ -15,6 +15,7 @@ namespace AmisReaderConsole
             var reader = new Reader("COM4");
             reader.DataReceived += Reader_DataReceived;
             reader.ChecksumError += Reader_ChecksumError;
+            reader.TelegramEndError += Reader_TelegramEndError;
 
             if (test)
             {
@@ -36,7 +37,7 @@ namespace AmisReaderConsole
         private static void Reader_ChecksumError(object sender, byte[] e)
         {
             Console.Clear();
-            Console.WriteLine("ChecksumError");
+            Console.WriteLine("TelegramEndError");
         }
 
         private static void Reader_DataReceived(object sender, byte[] e)
@@ -49,6 +50,12 @@ namespace AmisReaderConsole
 
             foreach (var a in results)
                 Console.WriteLine(a.ToString().PadRight(100));
+        }
+
+        private static void Reader_TelegramEndError(object sender, byte[] e)
+        {
+            Console.Clear();
+            Console.WriteLine("ChecksumError");
         }
     }
 }

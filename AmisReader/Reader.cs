@@ -32,6 +32,8 @@ namespace MBus
 
         public event EventHandler<byte[]> DataReceived;
 
+        public event EventHandler<byte[]> TelegramEndError;
+
         public byte ByteAck => 0xe5;
         public byte ByteEnd => 0x16;
         public byte ByteHeader => 0x68;
@@ -82,6 +84,7 @@ namespace MBus
 
                 while (!stop)
                 {
+                    //Check if there is either real data on the port or test data in the stream
                     hasData = false;
 
                     if (testStream == null && serialPort.BytesToRead > 0)
@@ -121,22 +124,33 @@ namespace MBus
                             }
                         }
 
-                        if (reading && data == ByteEnd && buffer.Count == TelegramLength)
+                        //Wait until analyzed telegram length is reached
+                        if (buffer.Count == TelegramLength)
                         {
-                            var content = buffer.ToArray().SubArray(LenghtHeader, LengthData);
+                            //Last read byte must be 0x16
+                            if (reading && data != ByteEnd)
+                                TelegramEndError?.Invoke(this, buffer.ToArray());
+                            else
+                            {
+                                var content = buffer.ToArray().SubArray(LenghtHeader, LengthData);
+
+                                reading = false;
+                                var checksum = 0;
+
+                                foreach (var b in content)
+                                    checksum += b;
+
+                                if ((checksum & 0xFF) != buffer[buffer.Count - 2])
+                                    ChecksumError?.Invoke(this, buffer.ToArray());
+                                else
+                                    DataReceived?.Invoke(this, content);
+                            }
 
                             reading = false;
-
-                            var checksum = 0;
-                            foreach (var b in content)
-                                checksum += b;
-
-                            if ((checksum & 0xFF) == buffer[buffer.Count - 2])
-                                DataReceived?.Invoke(this, content);
-                            else
-                                ChecksumError?.Invoke(this, buffer.ToArray());
                         }
 
+                        //Whenever 0x16 is received and not within telegram length, send an ack to the meter.
+                        //This is to acknowledge an already read telegram or to start communicaion afther the meter sent the every-minute-signal.
                         if (!reading && data == ByteEnd)
                             serialPort.Write(new byte[] { ByteAck }, 0, 1);
                     }
