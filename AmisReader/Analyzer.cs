@@ -36,7 +36,8 @@ namespace MBus
                         break;
                 }
 
-                tag.data.AddRange(reader.ReadBytes(tag.difs[0] & 0xF));
+                tag.data.AddRange(reader.ReadBytes(tag.DataLength));
+
                 results.Add(tag);
             } while (reader.BaseStream.Position < reader.BaseStream.Length - 2);
 
