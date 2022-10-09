@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.IO.Ports;
 using System.Threading.Tasks;
-using System.IO;
 
-namespace AmisReader
+namespace MBus
 {
     public class Reader
     {
@@ -25,7 +25,7 @@ namespace AmisReader
 
         public Reader(string portName)
         {
-            this.PortName = portName;
+            PortName = portName;
         }
 
         public event EventHandler<byte[]> DataReceived;
@@ -44,7 +44,17 @@ namespace AmisReader
             Start(null);
         }
 
-        public void Start(MemoryStream sampleStream)
+        public void Stop()
+        {
+            stop = true;
+        }
+
+        public void Test(byte[] data)
+        {
+            Start(new MemoryStream(data));
+        }
+
+        private void Start(MemoryStream testStream)
         {
             while (stop) ;
 
@@ -60,7 +70,7 @@ namespace AmisReader
                     NewLine = "\r\n"
                 };
 
-                if (sampleStream == null)
+                if (testStream == null)
                     serialPort.Open();
 
                 bool reading = false;
@@ -70,18 +80,18 @@ namespace AmisReader
 
                 while (!stop)
                 {
-                    if (sampleStream == null && serialPort.BytesToRead > 0)
+                    hasData = false;
+
+                    if (testStream == null && serialPort.BytesToRead > 0)
                     {
                         data = (byte)serialPort.ReadByte();
                         hasData = true;
                     }
-                    else if (sampleStream != null && sampleStream.Position < sampleStream.Length)
+                    else if (testStream != null && testStream.Position < testStream.Length)
                     {
-                        data = (byte)sampleStream.ReadByte();
+                        data = (byte)testStream.ReadByte();
                         hasData = true;
                     }
-                    else
-                        hasData = false;
 
                     if (hasData)
                     {
@@ -124,11 +134,6 @@ namespace AmisReader
                 serialPort.Close();
                 stop = false;
             });
-        }
-
-        public void Stop()
-        {
-            stop = true;
         }
     }
 }

@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using MBus;
+using System;
 
 namespace AmisReaderConsole
 {
@@ -12,18 +12,18 @@ namespace AmisReaderConsole
 
         private static void Main(string[] args)
         {
-            var reader = new AmisReader.Reader("COM4");
+            var reader = new Reader("COM4");
             reader.DataReceived += Reader_DataReceived;
 
             if (test)
             {
-                var text = sampleData1.Replace(" ", "");
-                byte[] data = new byte[text.Length / 2];
+                var text = sampleData2.Replace(" ", "");
+                byte[] testData = new byte[text.Length / 2];
 
-                for (int j = 0; j < data.Length; j++)
-                    data[j] = Convert.ToByte(text.Substring(j * 2, 2), 16);
+                for (int j = 0; j < testData.Length; j++)
+                    testData[j] = Convert.ToByte(text.Substring(j * 2, 2), 16);
 
-                reader.Start(new System.IO.MemoryStream(data));
+                reader.Test(testData);
             }
             else
             {
@@ -34,8 +34,8 @@ namespace AmisReaderConsole
 
         private static void Reader_DataReceived(object sender, byte[] e)
         {
-            var decoded = AmisReader.Decoder.Run(key, e);
-            var results = AmisReader.Analyzer.Run(decoded);
+            var decoded = Decoder.Run(key, e);
+            var results = Analyzer.Run(decoded);
 
             Console.CursorTop = 0;
             Console.CursorLeft = 0;

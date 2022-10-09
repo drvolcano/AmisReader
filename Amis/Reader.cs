@@ -2,12 +2,12 @@
 using System.IO.Ports;
 using System.Threading.Tasks;
 
-namespace AmisReader
+namespace Amis
 {
     /// <summary>
     /// Alternative Version, kann aber bei NetzOoe keine Daten lesen (ERR0007)
     /// </summary>
-    internal class Reader2
+    internal class Reader
     {
         public void Do()
         {

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace AmisReader
+namespace MBus
 {
     public static class Extensions
     {

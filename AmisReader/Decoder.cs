@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Security.Cryptography;
-using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
 
-namespace AmisReader
+namespace MBus
 {
     public static class Decoder
     {
